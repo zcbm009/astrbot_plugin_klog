@@ -40,6 +40,42 @@ def is_qq_unified_msg_origin(origin: str) -> bool:
     return False
 
 
+def is_qq_event(event: AstrMessageEvent) -> bool:
+    """
+    klog 仅面向 QQ 生态（含 OneBot / Mirai / QQ Official 等）。
+
+    之前仅用 unified_msg_origin 前缀做判断，实际在部分平台适配器上可能为空或格式不同，
+    导致在 QQ 中也误判为“不支持”。这里优先用 event.get_platform_name() 判断，
+    再回退到 unified_msg_origin 的启发式判断。
+    """
+    platform = ""
+    try:
+        platform = str(event.get_platform_name() or "")
+    except Exception:
+        platform = ""
+
+    p = platform.lower().strip()
+    if p:
+        # 常见 QQ 适配器：aiocqhttp(OneBot v11)、onebot、mirai、qqofficial 等
+        if p in {"aiocqhttp", "onebot", "mirai", "qqofficial", "qq"}:
+            return True
+        # 有些适配器命名可能包含 qq 字样
+        if "qq" in p:
+            return True
+
+    origin = str(getattr(event, "unified_msg_origin", "") or "")
+    o = origin.lower().strip()
+    if o:
+        for prefix in ("aiocqhttp:", "onebot:", "mirai:", "qq:", "qqofficial:"):
+            if o.startswith(prefix):
+                return True
+        # 兜底：某些实现不一定以固定前缀开头
+        if any(k in o for k in ("aiocqhttp", "onebot", "mirai", "qq")):
+            return True
+
+    return False
+
+
 class KlogApp:
     def __init__(self, context: Context, plugin_name: str = "klog"):
         self.context = context
@@ -77,8 +113,15 @@ class KlogApp:
 
     async def handle_event(self, event: AstrMessageEvent) -> Optional[str]:
         origin = getattr(event, "unified_msg_origin", "") or ""
-        if not is_qq_unified_msg_origin(origin):
-            return "klog 仅支持 QQ 平台。"
+        if not is_qq_event(event):
+            platform = ""
+            try:
+                platform = str(event.get_platform_name() or "")
+            except Exception:
+                platform = ""
+            # 带上 platform/origin 便于排查（不影响正常 QQ 使用）
+            suffix = f"（platform={platform or '-'} origin={origin or '-'}）"
+            return "klog 仅支持 QQ 平台。" + suffix
 
         user_id = str(event.get_sender_id())
         if not self.db:
