@@ -1,24 +1,50 @@
-from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
-from astrbot.api.star import Context, Star, register
-from astrbot.api import logger
+from __future__ import annotations
 
-@register("helloworld", "YourName", "一个简单的 Hello World 插件", "1.0.0")
-class MyPlugin(Star):
+from typing import Optional
+
+from astrbot.api import logger
+from astrbot.api.event import AstrMessageEvent, filter
+from astrbot.api.star import Context, Star, register
+
+try:
+    from .klog_app import KlogApp  # type: ignore
+except Exception:  # pragma: no cover
+    from klog_app import KlogApp
+
+
+@register("klog", "yugz", "个人规划/日报/任务管理（QQ 专用）", "0.1.0")
+class KlogPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
+        self._app: Optional[KlogApp] = None
 
     async def initialize(self):
-        """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
+        self._app = KlogApp(self.context, plugin_name=getattr(self, "name", "klog"))
+        await self._app.initialize()
 
-    # 注册指令的装饰器。指令名为 helloworld。注册成功后，发送 `/helloworld` 就会触发这个指令，并回复 `你好, {user_name}!`
-    @filter.command("helloworld")
-    async def helloworld(self, event: AstrMessageEvent):
-        """这是一个 hello world 指令""" # 这是 handler 的描述，将会被解析方便用户了解插件内容。建议填写。
-        user_name = event.get_sender_name()
-        message_str = event.message_str # 用户发的纯文本消息字符串
-        message_chain = event.get_messages() # 用户所发的消息的消息链 # from astrbot.api.message_components import *
-        logger.info(message_chain)
-        yield event.plain_result(f"Hello, {user_name}, 你发了 {message_str}!") # 发送一条纯文本消息
+    @filter.command("klog")
+    async def klog(self, event: AstrMessageEvent):
+        if not self._app:
+            yield event.plain_result("klog 初始化中，请稍后再试。")
+            return
+
+        try:
+            resp = await self._app.handle_event(event)
+        except Exception as e:
+            logger.exception("klog handle_event error")
+            yield event.plain_result(f"klog 发生错误：{e}")
+            return
+
+        if resp is None:
+            return
+
+        if isinstance(resp, str):
+            yield event.plain_result(resp)
+            return
+
+        # 默认按文本输出
+        yield resp
 
     async def terminate(self):
-        """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
+        if self._app:
+            await self._app.terminate()
