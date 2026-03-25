@@ -1021,7 +1021,8 @@ class KlogService:
     def _daily_current_scope(self) -> tuple[str, Optional[int]]:
         date = self.get_setting("current_daily_date")
         if not date:
-            raise ValueError("未打开日报。使用：/kplog daily open <YYYY-MM-DD> [--plan P#|alias]")
+            # 默认今天（Asia/Shanghai）
+            date = now_dt().date().isoformat()
         plan_id_s = self.get_setting("current_daily_plan_id") or ""
         plan_id = int(plan_id_s) if plan_id_s.strip().isdigit() else None
         return date, plan_id

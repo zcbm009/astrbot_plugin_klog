@@ -11,16 +11,16 @@ try:
     from .klog_db import KlogDB  # type: ignore
     from .klog_parse import ParsedCommand, parse_command, pop_flag_present, pop_flag_value  # type: ignore
     from .klog_service import KlogService  # type: ignore
-    from .klog_text import help_text  # type: ignore
+    from .klog_text import help_text, sub_help_text  # type: ignore
     from .klog_timer import TimerManager  # type: ignore
-    from .klog_utils import parse_int  # type: ignore
+    from .klog_utils import now_dt, parse_int  # type: ignore
 except Exception:  # pragma: no cover
     from klog_db import KlogDB
     from klog_parse import ParsedCommand, parse_command, pop_flag_present, pop_flag_value
     from klog_service import KlogService
-    from klog_text import help_text
+    from klog_text import help_text, sub_help_text
     from klog_timer import TimerManager
-    from klog_utils import parse_int
+    from klog_utils import now_dt, parse_int
 
 
 def is_qq_unified_msg_origin(origin: str) -> bool:
@@ -149,7 +149,14 @@ class KlogApp:
         try:
             resp = self._dispatch(service, origin, argv)
         except ValueError as e:
-            return f"参数错误：{e}\n\n" + help_text()
+            hint = ""
+            if argv:
+                sub = argv[0]
+                if sub in {"plan", "stage", "task", "timer", "log", "daily", "prog"}:
+                    hint = f"\n提示：发送 /kplog {sub} help 查看该子命令用法。"
+                else:
+                    hint = "\n提示：发送 /kplog help 查看总览。"
+            return f"参数错误：{e}{hint}"
 
         # 涉及 timer 状态变更的命令需要 refresh
         if argv and argv[0] == "timer":
@@ -175,12 +182,14 @@ class KlogApp:
         if cmd == "prog":
             return self._cmd_prog(service, argv[1:])
 
-        return "未知子命令。\n\n" + help_text()
+        return "未知子命令。提示：发送 /kplog help 查看总览。"
 
     def _cmd_plan(self, service: KlogService, argv: list[str]) -> str:
         if not argv:
-            raise ValueError("plan 缺少子命令")
+            return sub_help_text("plan")
         sub = argv[0]
+        if sub in {"help", "-h", "--help"}:
+            return sub_help_text("plan")
 
         if sub == "add":
             if len(argv) < 2:
@@ -222,8 +231,10 @@ class KlogApp:
 
     def _cmd_stage(self, service: KlogService, argv: list[str]) -> str:
         if not argv:
-            raise ValueError("stage 缺少子命令")
+            return sub_help_text("stage")
         sub = argv[0]
+        if sub in {"help", "-h", "--help"}:
+            return sub_help_text("stage")
 
         if sub == "add":
             if len(argv) < 3:
@@ -268,8 +279,10 @@ class KlogApp:
 
     def _cmd_task(self, service: KlogService, argv: list[str]) -> str:
         if not argv:
-            raise ValueError("task 缺少子命令")
+            return sub_help_text("task")
         sub = argv[0]
+        if sub in {"help", "-h", "--help"}:
+            return sub_help_text("task")
 
         if sub == "add":
             if len(argv) < 3:
@@ -325,8 +338,10 @@ class KlogApp:
 
     def _cmd_timer(self, service: KlogService, origin: str, argv: list[str]) -> str:
         if not argv:
-            raise ValueError("timer 缺少子命令")
+            return sub_help_text("timer")
         sub = argv[0]
+        if sub in {"help", "-h", "--help"}:
+            return sub_help_text("timer")
 
         if sub == "start":
             if len(argv) < 2:
@@ -367,8 +382,10 @@ class KlogApp:
 
     def _cmd_log(self, service: KlogService, argv: list[str]) -> str:
         if not argv:
-            raise ValueError("log 缺少子命令")
+            return sub_help_text("log")
         sub = argv[0]
+        if sub in {"help", "-h", "--help"}:
+            return sub_help_text("log")
 
         if sub == "add":
             if len(argv) < 2:
@@ -393,15 +410,18 @@ class KlogApp:
 
     def _cmd_daily(self, service: KlogService, argv: list[str]) -> str:
         if not argv:
-            raise ValueError("daily 缺少子命令")
+            return sub_help_text("daily")
         sub = argv[0]
+        if sub in {"help", "-h", "--help"}:
+            return sub_help_text("daily")
+
+        def today_date_str() -> str:
+            return now_dt().date().isoformat()
 
         if sub == "open":
-            if len(argv) < 2:
-                raise ValueError("用法：/kplog daily open <YYYY-MM-DD> [--plan P#|alias]")
             args = argv[1:].copy()
             plan_ref = pop_flag_value(args, "--plan")
-            date_s = args[0]
+            date_s = args[0] if args else today_date_str()
             return service.daily_open(date_s, plan_ref=plan_ref)
 
         if sub == "add":
@@ -412,22 +432,25 @@ class KlogApp:
             return service.daily_add(field, text)
 
         if sub == "show":
-            if len(argv) < 2:
-                raise ValueError("用法：/kplog daily show <YYYY-MM-DD> [--plan P#|alias]")
             args = argv[1:].copy()
             plan_ref = pop_flag_value(args, "--plan")
-            return service.daily_show(args[0], plan_ref=plan_ref)
+            # 不传日期则默认今天；传入日期则展示目标日期
+            date_s = args[0] if args else today_date_str()
+
+            return service.daily_show(date_s, plan_ref=plan_ref)
 
         if sub == "gen":
-            if len(argv) < 2:
-                raise ValueError("用法：/kplog daily gen <YYYY-MM-DD> [--plan P#|alias]")
             args = argv[1:].copy()
             plan_ref = pop_flag_value(args, "--plan")
-            return service.daily_gen(args[0], plan_ref=plan_ref)
+            date_s = args[0] if args else today_date_str()
+
+            return service.daily_gen(date_s, plan_ref=plan_ref)
 
         raise ValueError("未知 daily 子命令")
 
     def _cmd_prog(self, service: KlogService, argv: list[str]) -> str:
+        if not argv or argv[0] in {"help", "-h", "--help"}:
+            return sub_help_text("prog")
         if len(argv) < 1:
             raise ValueError("用法：/kplog prog <0-100> [--note <text>]")
         args = argv.copy()
