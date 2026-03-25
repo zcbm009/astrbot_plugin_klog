@@ -121,11 +121,11 @@ class KlogApp:
                 platform = ""
             # 带上 platform/origin 便于排查（不影响正常 QQ 使用）
             suffix = f"（platform={platform or '-'} origin={origin or '-'}）"
-            return "klog 仅支持 QQ 平台。" + suffix
+            return "kplog 仅支持 QQ 平台。" + suffix
 
         user_id = str(event.get_sender_id())
         if not self.db:
-            return "klog 数据库未初始化。"
+            return "kplog 数据库未初始化。"
 
         service = KlogService(self.db, user_id=user_id)
 
@@ -184,7 +184,7 @@ class KlogApp:
 
         if sub == "add":
             if len(argv) < 2:
-                raise ValueError("用法：/klog plan add <name> [--alias <alias>] [--note <text>]")
+                raise ValueError("用法：/kplog plan add <name> [--alias <alias>] [--note <text>]")
             args = argv[1:].copy()
             alias = pop_flag_value(args, "--alias")
             note = pop_flag_value(args, "--note")
@@ -200,22 +200,22 @@ class KlogApp:
 
         if sub == "show":
             if len(argv) < 2:
-                raise ValueError("用法：/klog plan show <P#|alias>")
+                raise ValueError("用法：/kplog plan show <P#|alias>")
             return service.plan_show(argv[1])
 
         if sub == "rename":
             if len(argv) < 3:
-                raise ValueError("用法：/klog plan rename <P#|alias> <new_name>")
+                raise ValueError("用法：/kplog plan rename <P#|alias> <new_name>")
             return service.plan_rename(argv[1], " ".join(argv[2:]).strip())
 
         if sub == "alias":
             if len(argv) < 3:
-                raise ValueError("用法：/klog plan alias <P#|alias> <alias>")
+                raise ValueError("用法：/kplog plan alias <P#|alias> <alias>")
             return service.plan_alias(argv[1], argv[2])
 
         if sub == "archive":
             if len(argv) < 2:
-                raise ValueError("用法：/klog plan archive <P#|alias>")
+                raise ValueError("用法：/kplog plan archive <P#|alias>")
             return service.plan_archive(argv[1])
 
         raise ValueError("未知 plan 子命令")
@@ -227,7 +227,7 @@ class KlogApp:
 
         if sub == "add":
             if len(argv) < 3:
-                raise ValueError("用法：/klog stage add <P#|alias> <name> --start <dt> --end <dt>")
+                raise ValueError("用法：/kplog stage add <P#|alias> <name> --start <dt> --end <dt>")
             args = argv[1:].copy()
             note = pop_flag_value(args, "--note")
             start = pop_flag_value(args, "--start")
@@ -240,17 +240,17 @@ class KlogApp:
 
         if sub == "ls":
             if len(argv) < 2:
-                raise ValueError("用法：/klog stage ls <P#|alias>")
+                raise ValueError("用法：/kplog stage ls <P#|alias>")
             return service.stage_ls(argv[1])
 
         if sub == "show":
             if len(argv) < 2:
-                raise ValueError("用法：/klog stage show <S#>")
+                raise ValueError("用法：/kplog stage show <S#>")
             return service.stage_show(argv[1])
 
         if sub == "time":
             if len(argv) < 2:
-                raise ValueError("用法：/klog stage time <S#> --start <dt> --end <dt>")
+                raise ValueError("用法：/kplog stage time <S#> --start <dt> --end <dt>")
             args = argv[1:].copy()
             start = pop_flag_value(args, "--start")
             end = pop_flag_value(args, "--end")
@@ -261,7 +261,7 @@ class KlogApp:
 
         if sub == "rename":
             if len(argv) < 3:
-                raise ValueError("用法：/klog stage rename <S#> <new_name>")
+                raise ValueError("用法：/kplog stage rename <S#> <new_name>")
             return service.stage_rename(argv[1], " ".join(argv[2:]).strip())
 
         raise ValueError("未知 stage 子命令")
@@ -273,7 +273,7 @@ class KlogApp:
 
         if sub == "add":
             if len(argv) < 3:
-                raise ValueError("用法：/klog task add <S#> <name> [--order <n>] [--note <text>]")
+                raise ValueError("用法：/kplog task add <S#> <name> [--order <n>] [--note <text>]")
             args = argv[1:].copy()
             note = pop_flag_value(args, "--note")
             order_s = pop_flag_value(args, "--order")
@@ -284,29 +284,29 @@ class KlogApp:
 
         if sub == "ls":
             if len(argv) < 2:
-                raise ValueError("用法：/klog task ls <S#> [--all]")
+                raise ValueError("用法：/kplog task ls <S#> [--all]")
             args = argv[1:].copy()
             show_all = pop_flag_present(args, "--all")
             return service.task_ls(args[0], show_all=show_all)
 
         if sub == "show":
             if len(argv) < 2:
-                raise ValueError("用法：/klog task show <T#>")
+                raise ValueError("用法：/kplog task show <T#>")
             return service.task_show(argv[1])
 
         if sub == "order":
             if len(argv) < 3:
-                raise ValueError("用法：/klog task order <T#> <n>")
+                raise ValueError("用法：/kplog task order <T#> <n>")
             return service.task_order(argv[1], argv[2])
 
         if sub == "rename":
             if len(argv) < 3:
-                raise ValueError("用法：/klog task rename <T#> <new_name>")
+                raise ValueError("用法：/kplog task rename <T#> <new_name>")
             return service.task_rename(argv[1], " ".join(argv[2:]).strip())
 
         if sub == "prog":
             if len(argv) < 3:
-                raise ValueError("用法：/klog task prog <T#> <0-100> [--note <text>]")
+                raise ValueError("用法：/kplog task prog <T#> <0-100> [--note <text>]")
             args = argv[1:].copy()
             note = pop_flag_value(args, "--note")
             task_id = service.resolve_task_id(args[0])
@@ -315,7 +315,7 @@ class KlogApp:
 
         if sub == "state":
             if len(argv) < 3:
-                raise ValueError("用法：/klog task state <T#> <todo|doing|done> [--note <text>]")
+                raise ValueError("用法：/kplog task state <T#> <todo|doing|done> [--note <text>]")
             args = argv[1:].copy()
             note = pop_flag_value(args, "--note")
             task_id = service.resolve_task_id(args[0])
@@ -330,7 +330,7 @@ class KlogApp:
 
         if sub == "start":
             if len(argv) < 2:
-                raise ValueError("用法：/klog timer start <T#> [--remind <minutes|off>] [--to <session>]")
+                raise ValueError("用法：/kplog timer start <T#> [--remind <minutes|off>] [--to <session>]")
             args = argv[1:].copy()
             remind_s = pop_flag_value(args, "--remind")
             to_origin = pop_flag_value(args, "--to") or origin
@@ -356,7 +356,7 @@ class KlogApp:
 
         if sub == "remind":
             if len(argv) < 2:
-                raise ValueError("用法：/klog timer remind <minutes|off>")
+                raise ValueError("用法：/kplog timer remind <minutes|off>")
             v = argv[1]
             if v.lower() == "off":
                 return service.timer_set_remind(None)
@@ -372,7 +372,7 @@ class KlogApp:
 
         if sub == "add":
             if len(argv) < 2:
-                raise ValueError("用法：/klog log add <text> [--task T#] [--min n] [--prog 0-100]")
+                raise ValueError("用法：/kplog log add <text> [--task T#] [--min n] [--prog 0-100]")
             args = argv[1:].copy()
             task_ref = pop_flag_value(args, "--task")
             min_s = pop_flag_value(args, "--min")
@@ -384,7 +384,7 @@ class KlogApp:
 
         if sub == "ls":
             if len(argv) < 2:
-                raise ValueError("用法：/klog log ls <T#> [--date YYYY-MM-DD]")
+                raise ValueError("用法：/kplog log ls <T#> [--date YYYY-MM-DD]")
             args = argv[1:].copy()
             date_s = pop_flag_value(args, "--date")
             return service.log_ls(args[0], date_s=date_s)
@@ -398,7 +398,7 @@ class KlogApp:
 
         if sub == "open":
             if len(argv) < 2:
-                raise ValueError("用法：/klog daily open <YYYY-MM-DD> [--plan P#|alias]")
+                raise ValueError("用法：/kplog daily open <YYYY-MM-DD> [--plan P#|alias]")
             args = argv[1:].copy()
             plan_ref = pop_flag_value(args, "--plan")
             date_s = args[0]
@@ -406,21 +406,21 @@ class KlogApp:
 
         if sub == "add":
             if len(argv) < 3:
-                raise ValueError("用法：/klog daily add done|block|next|note <text>")
+                raise ValueError("用法：/kplog daily add done|block|next|note <text>")
             field = argv[1]
             text = " ".join(argv[2:]).strip()
             return service.daily_add(field, text)
 
         if sub == "show":
             if len(argv) < 2:
-                raise ValueError("用法：/klog daily show <YYYY-MM-DD> [--plan P#|alias]")
+                raise ValueError("用法：/kplog daily show <YYYY-MM-DD> [--plan P#|alias]")
             args = argv[1:].copy()
             plan_ref = pop_flag_value(args, "--plan")
             return service.daily_show(args[0], plan_ref=plan_ref)
 
         if sub == "gen":
             if len(argv) < 2:
-                raise ValueError("用法：/klog daily gen <YYYY-MM-DD> [--plan P#|alias]")
+                raise ValueError("用法：/kplog daily gen <YYYY-MM-DD> [--plan P#|alias]")
             args = argv[1:].copy()
             plan_ref = pop_flag_value(args, "--plan")
             return service.daily_gen(args[0], plan_ref=plan_ref)
@@ -429,7 +429,7 @@ class KlogApp:
 
     def _cmd_prog(self, service: KlogService, argv: list[str]) -> str:
         if len(argv) < 1:
-            raise ValueError("用法：/klog prog <0-100> [--note <text>]")
+            raise ValueError("用法：/kplog prog <0-100> [--note <text>]")
         args = argv.copy()
         note = pop_flag_value(args, "--note")
         prog = parse_int(args[0], "progress", 0, 100)

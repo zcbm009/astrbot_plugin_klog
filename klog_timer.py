@@ -49,7 +49,7 @@ class TimerManager:
             except asyncio.CancelledError:
                 pass
             except Exception:
-                logger.exception("klog remind loop cancel error")
+                logger.exception("kplog remind loop cancel error")
         self._task = None
 
     async def _loop(self) -> None:
@@ -94,17 +94,17 @@ class TimerManager:
             except asyncio.CancelledError:
                 return
             except Exception:
-                logger.exception("klog remind loop error")
+                logger.exception("kplog remind loop error")
                 await asyncio.sleep(10)
 
     async def _send_remind(self, unified_msg_origin: str, task_id: int, start_at: str) -> None:
         elapsed = int((now_dt() - from_iso(start_at)).total_seconds() // 60)
         elapsed = max(elapsed, 0)
         text = (
-            f"klog 提醒：你正在计时 T{task_id}，已累计 {elapsed} 分钟。\n"
-            f"- 记录日志：/klog log add <心得> [--min <分钟>] [--prog <0-100>]\n"
-            f"- 推进进度：/klog prog <0-100> [--note <text>]\n"
-            f"- 停止计时：/klog timer stop"
+            f"kplog 提醒：你正在计时 T{task_id}，已累计 {elapsed} 分钟。\n"
+            f"- 记录日志：/kplog log add <心得> [--min <分钟>] [--prog <0-100>]\n"
+            f"- 推进进度：/kplog prog <0-100> [--note <text>]\n"
+            f"- 停止计时：/kplog timer stop"
         )
         # 主动消息：使用 docs 中建议的 context.send_message(unified_msg_origin, chains)
         # 这里用最简单的纯文本消息链

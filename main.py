@@ -22,17 +22,17 @@ class KlogPlugin(Star):
         self._app = KlogApp(self.context, plugin_name=getattr(self, "name", "klog"))
         await self._app.initialize()
 
-    @filter.command("klog")
-    async def klog(self, event: AstrMessageEvent):
+    @filter.command("kplog")
+    async def kplog(self, event: AstrMessageEvent):
         if not self._app:
-            yield event.plain_result("klog 初始化中，请稍后再试。")
+            yield event.plain_result("kplog 初始化中，请稍后再试。")
             return
 
         try:
             resp = await self._app.handle_event(event)
         except Exception as e:
-            logger.exception("klog handle_event error")
-            yield event.plain_result(f"klog 发生错误：{e}")
+            logger.exception("kplog handle_event error")
+            yield event.plain_result(f"kplog 发生错误：{e}")
             return
 
         if resp is None:

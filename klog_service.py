@@ -173,7 +173,7 @@ class KlogService:
             (self.user_id,),
         )
         if not rows:
-            return "暂无规划。使用：/klog plan add <name>"
+            return "暂无规划。使用：/kplog plan add <name>"
 
         lines = ["规划列表："]
         for r in rows:
@@ -220,7 +220,7 @@ class KlogService:
                 sp = self.stage_progress(int(s["id"]))
                 lines.append(f"- S{s['id']} {s['name']}（{sp}%） 预计 {s['plan_start_at']} ~ {s['plan_end_at']}")
         else:
-            lines.append("阶段：无（使用 /klog stage add ... 创建）")
+            lines.append("阶段：无（使用 /kplog stage add ... 创建）")
         return "\n".join(lines)
 
     def plan_rename(self, ref: str, new_name: str) -> str:
@@ -309,7 +309,7 @@ class KlogService:
             (plan_id, self.user_id),
         )
         if not rows:
-            return "该规划下暂无阶段。使用：/klog stage add ..."
+            return "该规划下暂无阶段。使用：/kplog stage add ..."
         lines = [f"阶段列表（P{plan_id}）："]
         for r in rows:
             sp = self.stage_progress(int(r["id"]))
@@ -356,7 +356,7 @@ class KlogService:
                 order = f"#{t['order_no']} " if t["order_no"] is not None else ""
                 lines.append(f"- T{t['id']} {order}{t['name']} [{t['state']}] {t['progress']}%")
         else:
-            lines.append("任务：无（使用 /klog task add ... 创建）")
+            lines.append("任务：无（使用 /kplog task add ... 创建）")
         return "\n".join(lines)
 
     def stage_time(self, stage_ref: str, start_s: str, end_s: str) -> str:
@@ -419,7 +419,7 @@ class KlogService:
             (stage_id, self.user_id),
         )
         if not rows:
-            return "暂无任务。使用：/klog task add ..."
+            return "暂无任务。使用：/kplog task add ..."
         lines = [f"任务列表（S{stage_id}）："]
         for r in rows:
             order = f"#{r['order_no']} " if r["order_no"] is not None else ""
@@ -733,7 +733,7 @@ class KlogService:
 
     def timer_start(self, task_ref: str, remind_minutes: Optional[int], remind_off: bool, unified_msg_origin: str) -> str:
         if self.timer_get_active():
-            raise ValueError("已存在活动计时器，请先执行：/klog timer stop")
+            raise ValueError("已存在活动计时器，请先执行：/kplog timer stop")
 
         task_id = self.resolve_task_id(task_ref)
         task = self.db.fetchone(
@@ -891,7 +891,7 @@ class KlogService:
         else:
             active = self.timer_get_active()
             if not active:
-                raise ValueError("未指定任务且当前没有活动计时器。使用：/klog log add ... --task T#")
+                raise ValueError("未指定任务且当前没有活动计时器。使用：/kplog log add ... --task T#")
             task_id = active.task_id
 
         now = to_iso(now_dt())
@@ -1017,7 +1017,7 @@ class KlogService:
     def _daily_current_scope(self) -> tuple[str, Optional[int]]:
         date = self.get_setting("current_daily_date")
         if not date:
-            raise ValueError("未打开日报。使用：/klog daily open <YYYY-MM-DD> [--plan P#|alias]")
+            raise ValueError("未打开日报。使用：/kplog daily open <YYYY-MM-DD> [--plan P#|alias]")
         plan_id_s = self.get_setting("current_daily_plan_id") or ""
         plan_id = int(plan_id_s) if plan_id_s.strip().isdigit() else None
         return date, plan_id
@@ -1061,7 +1061,7 @@ class KlogService:
             (self.user_id, date, plan_id),
         )
         if not row:
-            return "日报不存在。使用：/klog daily open ..."
+            return "日报不存在。使用：/kplog daily open ..."
         scope = f"P{plan_id}" if plan_id is not None else "全局"
         return (
             f"日报 {date}（{scope}）\n"
@@ -1120,5 +1120,5 @@ class KlogService:
         lines.append("")
         lines.append(f"总计：{total} 分钟")
         lines.append("")
-        lines.append("可继续用：/klog daily add done|block|next|note ... 逐项完善。")
+        lines.append("可继续用：/kplog daily add done|block|next|note ... 逐项完善。")
         return "\n".join(lines)

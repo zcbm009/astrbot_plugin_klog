@@ -7,14 +7,14 @@ from typing import Optional
 
 @dataclass(frozen=True)
 class ParsedCommand:
-    # tokens after stripping /klog prefix
+    # tokens after stripping /kplog prefix
     argv: list[str]
     raw: str
 
 
 def strip_klog_prefix(message_str: str) -> str:
     s = message_str.strip()
-    for prefix in ("/klog", "klog", "/ＫＬＯＧ", "/KLOG", "KLOG"):
+    for prefix in ("/kplog", "kplog", "/ＫＰＬＯＧ", "/KPLOG", "KPLOG"):
         if s.startswith(prefix):
             rest = s[len(prefix) :].strip()
             return rest
@@ -53,4 +53,3 @@ def pop_flag_present(argv: list[str], flag: str) -> bool:
         argv.remove(flag)
         return True
     return False
-
