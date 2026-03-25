@@ -10,6 +10,8 @@ try:
     from .klog_db import KlogDB  # type: ignore
     from .klog_utils import (  # type: ignore
         compute_next_remind_at,
+        fmt_dt_minute,
+        fmt_dt_range,
         from_iso,
         now_dt,
         parse_date,
@@ -21,6 +23,8 @@ except Exception:  # pragma: no cover
     from klog_db import KlogDB
     from klog_utils import (
         compute_next_remind_at,
+        fmt_dt_minute,
+        fmt_dt_range,
         from_iso,
         now_dt,
         parse_date,
@@ -210,15 +214,15 @@ class KlogService:
             f"P{plan['id']} {plan['name']}",
             f"- 进度：{progress}%",
             f"- alias：{plan['alias'] or '-'}",
-            f"- 实际开始：{plan['start_at'] or '-'}",
-            f"- 实际完成：{plan['done_at'] or '-'}",
+            f"- 实际开始：{fmt_dt_minute(plan['start_at'])}",
+            f"- 实际完成：{fmt_dt_minute(plan['done_at'])}",
             f"- 备注：{(plan['note'] or '-').strip()}",
         ]
         if stages:
             lines.append("阶段：")
             for s in stages:
                 sp = self.stage_progress(int(s["id"]))
-                lines.append(f"- S{s['id']} {s['name']}（{sp}%） 预计 {s['plan_start_at']} ~ {s['plan_end_at']}")
+                lines.append(f"- S{s['id']} {s['name']}（{sp}%） 预计 {fmt_dt_range(s['plan_start_at'], s['plan_end_at'])}")
         else:
             lines.append("阶段：无（使用 /kplog stage add ... 创建）")
         return "\n".join(lines)
@@ -313,7 +317,7 @@ class KlogService:
         lines = [f"阶段列表（P{plan_id}）："]
         for r in rows:
             sp = self.stage_progress(int(r["id"]))
-            lines.append(f"- S{r['id']} {r['name']}（{sp}%） 预计 {r['plan_start_at']} ~ {r['plan_end_at']}")
+            lines.append(f"- S{r['id']} {r['name']}（{sp}%） 预计 {fmt_dt_range(r['plan_start_at'], r['plan_end_at'])}")
         return "\n".join(lines)
 
     def stage_show(self, stage_ref: str) -> str:
@@ -333,9 +337,9 @@ class KlogService:
             f"S{stage['id']} {stage['name']}",
             f"- 规划：P{stage['plan_id']}",
             f"- 进度：{sp}%",
-            f"- 预计：{stage['plan_start_at']} ~ {stage['plan_end_at']}",
-            f"- 实际开始：{stage['start_at'] or '-'}",
-            f"- 实际完成：{stage['done_at'] or '-'}",
+            f"- 预计：{fmt_dt_range(stage['plan_start_at'], stage['plan_end_at'])}",
+            f"- 实际开始：{fmt_dt_minute(stage['start_at'])}",
+            f"- 实际完成：{fmt_dt_minute(stage['done_at'])}",
             f"- 备注：{(stage['note'] or '-').strip()}",
         ]
         tasks = self.db.fetchall(
@@ -444,8 +448,8 @@ class KlogService:
             f"- 状态：{task['state']}",
             f"- 进度：{task['progress']}%",
             f"- 顺序：{task['order_no'] if task['order_no'] is not None else '-'}",
-            f"- 开始：{task['start_at'] or '-'}",
-            f"- 完成：{task['done_at'] or '-'}",
+            f"- 开始：{fmt_dt_minute(task['start_at'])}",
+            f"- 完成：{fmt_dt_minute(task['done_at'])}",
             f"- 备注：{(task['note'] or '-').strip()}",
         ]
         return "\n".join(lines)
@@ -836,7 +840,7 @@ class KlogService:
         elapsed = int((now_dt() - from_iso(active.start_at)).total_seconds() // 60)
         elapsed = max(elapsed, 0)
         remind = f"{active.remind_minutes} 分钟" if active.remind_minutes is not None else "关闭"
-        nxt = active.next_remind_at or "-"
+        nxt = fmt_dt_minute(active.next_remind_at)
         return (
             f"计时中：T{active.task_id} {task_name}\n"
             f"- 已累计：{elapsed} 分钟\n"
@@ -991,7 +995,7 @@ class KlogService:
             note = (r["note"] or "").strip()
             if len(note) > 40:
                 note = note[:40] + "…"
-            lines.append(f"- #{r['id']} [{r['type']}] {mins}{prog}{r['created_at']} {note}")
+            lines.append(f"- #{r['id']} [{r['type']}] {mins}{prog}{fmt_dt_minute(r['created_at'])} {note}")
         return "\n".join(lines)
 
     # ------------------------

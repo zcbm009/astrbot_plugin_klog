@@ -27,6 +27,27 @@ def from_iso(s: str) -> datetime:
     return dt
 
 
+def fmt_dt_minute(s: Optional[str]) -> str:
+    """
+    将 DB 中存储的 ISO8601 时间串格式化为用户可读的 `YYYY-MM-DD HH:mm`（分钟精度）。
+    """
+    if not s:
+        return "-"
+    try:
+        dt = from_iso(str(s))
+        dt = dt.astimezone(SH_TZ)
+        return dt.strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        # 兜底：如果不是 ISO 格式，就原样输出（避免影响业务）
+        return str(s)
+
+
+def fmt_dt_range(start: Optional[str], end: Optional[str]) -> str:
+    if not start and not end:
+        return "-"
+    return f"{fmt_dt_minute(start)} ~ {fmt_dt_minute(end)}"
+
+
 def parse_dt(s: str) -> datetime:
     s = s.strip()
     for fmt in ("%Y-%m-%d %H:%M", "%Y/%m/%d %H:%M"):
